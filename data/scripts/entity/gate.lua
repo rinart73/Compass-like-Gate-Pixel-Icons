@@ -4,6 +4,7 @@ package.path = package.path .. ";data/scripts/?.lua"
 require ("galaxy")
 require ("faction")
 require ("stringutility")
+require ("callable")
 local SectorSpecifics = require ("sectorspecifics")
 
 -- namespace Gate
@@ -113,7 +114,7 @@ function Gate.updateTooltip(ready)
 
 		-- on the client, calculate the fee and update the tooltip
 		local user = Player()
-		local ship = Entity(user.craftIndex)
+		local ship = Sector():getEntity(user.craftIndex)
 
 		-- during login/loading screen it's possible that the player still has to be placed in his drone, so ship is nil
 		if not ship then return end
@@ -134,18 +135,20 @@ function Gate.updateTooltip(ready)
 				-- EntityIcon().icon = "data/textures/icons/pixel/lyr/gateNA.png"
 			-- end
 			
-			tooltip:setDisplayTooltip(1, "Not Ready"%_t, "Not Ready"%_t)
+			tooltip:setDisplayTooltip(1, "Status"%_t, "Not Ready"%_t)
 		else
 			-- if gateIcon == "" or gateIcon == "data/textures/icons/pixel/lyr/gateNA.png" then
 				-- EntityIcon().icon = Gate.getGateName()
 			-- end
 			
-			tooltip:setDisplayTooltip(1, "Ready"%_t, "Ready"%_t)
+			tooltip:setDisplayTooltip(1, "Status"%_t, "Ready"%_t)
 		end
 	end
 end
+callable(Gate, "updateTooltip")
 
 function Gate.factor(providingFaction, orderingFaction)
+  if not providingFaction or not orderingFaction then return 0 end
 	if orderingFaction.index == providingFaction.index then return 0 end
 
 	local relation = 0
@@ -166,7 +169,7 @@ function Gate.factor(providingFaction, orderingFaction)
 end
 
 function Gate.canTransfer(index)
-	local ship = Entity(index)
+	local ship = Sector():getEntity(index)
 	local faction = Faction(ship.factionIndex)
 
 	-- unowned objects and AI factions can always pass
