@@ -19,7 +19,9 @@ local dirs =
 	{name = "E",    angle = math.pi * 2 * 16 / 16}
 }
 
-function Gate.getGateName()
+local data = {}
+
+function Gate.getGateName(isDisabled)
     local x, y = Sector():getCoordinates()
     local tx, ty = WormHole():getTargetCoordinates()
 
@@ -36,7 +38,11 @@ function Gate.getGateName()
         local d = math.abs(ownAngle - dir.angle)
         if d < min then
             min = d
-            iconPath = "data/textures/icons/gatepixelicons/gate"..dir.name..".png"
+            if isDisabled then -- Integration: Gate Founder
+                iconPath = "data/textures/icons/gatepixelicons/gateNA.png"
+            else
+                iconPath = "data/textures/icons/gatepixelicons/gate"..dir.name..".png"
+            end
             dirString = (dir.name .. " /*direction*/")%_t
         end
     end
@@ -68,5 +74,70 @@ function Gate.initialize()
 
         invokeServerFunction("updateTooltip")
         entity:registerCallback("onSelected", "updateTooltip")
+    end
+end
+
+-- Integration: Gate Founder
+function Gate.updateTooltip(ready, saveOrDisabled)
+    if onServer() then
+        -- on the server, check if the sector is ready,
+        -- then invoke client sided tooltip update with the ready variable
+        local entity = Entity()
+        local wormhole = entity:getWormholeComponent()
+        local transferrer = EntityTransferrer(entity.index)
+        if saveOrDisabled then
+            data.disabled = not wormhole.enabled
+        end
+
+        ready = transferrer.sectorReady
+
+        if not callingPlayer then
+            broadcastInvokeClientFunction("updateTooltip", ready, not wormhole.enabled)
+        else
+            invokeClientFunction(Player(callingPlayer), "updateTooltip", ready, not wormhole.enabled)
+        end
+    else
+        if type(ready) == "boolean" then
+            gateReady = ready
+        end
+
+        -- on the client, calculate the fee and update the tooltip
+        local user = Player()
+        local ship = Sector():getEntity(user.craftIndex)
+
+        -- during login/loading screen it's possible that the player still has to be placed in his drone, so ship is nil
+        if not ship then return end
+
+        local shipFaction = Faction(ship.factionIndex)
+        if shipFaction then
+            user = shipFaction
+        end
+
+        local fee = math.ceil(base * Gate.factor(Faction(), user))
+        local tooltip = EntityTooltip(Entity().index)
+
+        tooltip:setDisplayTooltip(0, "Fee"%_t, tostring(fee) .. "$")
+
+        if not gateReady then
+            tooltip:setDisplayTooltip(1, "Status"%_t, "Not Ready"%_t)
+        else
+            tooltip:setDisplayTooltip(1, "Status"%_t, "Ready"%_t)
+        end
+
+        EntityIcon().icon = Gate.getGateName(saveOrDisabled)
+    end
+end
+
+function Gate.secure()
+    return data
+end
+
+function Gate.restore(_data)
+    data = _data
+    local wormhole = Entity():getWormholeComponent()
+    if not data.disabled ~= wormhole.enabled then
+        --print("wtf game, why you reset wh state?!")
+        wormhole.enabled = not _data.disabled
+        Gate.updateTooltip()
     end
 end
