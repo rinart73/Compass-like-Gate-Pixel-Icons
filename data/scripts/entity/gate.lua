@@ -1,4 +1,4 @@
-local dirs =
+dirs = -- overridden
 {
 	{name = "E",    angle = math.pi * 2 * 0 / 16},
 	{name = "ENE",  angle = math.pi * 2 * 1 / 16},
@@ -19,9 +19,10 @@ local dirs =
 	{name = "E",    angle = math.pi * 2 * 16 / 16}
 }
 
-local data = {}
+local compassLikeGPI_disabled -- server
+local compassLikeGPI_secure, compassLikeGPI_restore -- overridden functions
 
-function Gate.getGateName(isDisabled)
+function Gate.getGateName(isDisabled) -- overridden
     local x, y = Sector():getCoordinates()
     local tx, ty = WormHole():getTargetCoordinates()
 
@@ -50,7 +51,7 @@ function Gate.getGateName(isDisabled)
     return iconPath, "${dir} Gate to ${sector}"%_t % {dir = dirString, sector = specs.name}
 end
 
-function Gate.initialize()
+function Gate.initialize() -- overridden
     local entity = Entity()
     local wormhole = entity:getWormholeComponent()
 
@@ -77,16 +78,15 @@ function Gate.initialize()
     end
 end
 
--- Integration: Gate Founder
-function Gate.updateTooltip(ready, saveOrDisabled)
+function Gate.updateTooltip(ready, saveOrDisabled) -- overridden
     if onServer() then
         -- on the server, check if the sector is ready,
         -- then invoke client sided tooltip update with the ready variable
         local entity = Entity()
         local wormhole = entity:getWormholeComponent()
         local transferrer = EntityTransferrer(entity.index)
-        if saveOrDisabled then
-            data.disabled = not wormhole.enabled
+        if saveOrDisabled then -- Save wormhole state (to turn gates on and off)
+            compassLikeGPI_disabled = not wormhole.enabled
         end
 
         ready = transferrer.sectorReady
@@ -128,16 +128,31 @@ function Gate.updateTooltip(ready, saveOrDisabled)
     end
 end
 
+if onServer() then
+
+
+compassLikeGPI_secure = secure
 function Gate.secure()
+    local data = {}
+    if compassLikeGPI_secure then
+        data = compassLikeGPI_secure()
+    end
+    data.disabled = compassLikeGPI_disabled
     return data
 end
 
-function Gate.restore(_data)
-    data = _data
+compassLikeGPI_restore = restore
+function Gate.restore(data)
+    compassLikeGPI_disabled = data.disabled
     local wormhole = Entity():getWormholeComponent()
-    if not data.disabled ~= wormhole.enabled then
-        --print("wtf game, why you reset wh state?!")
-        wormhole.enabled = not _data.disabled
+    if not compassLikeGPI_disabled ~= wormhole.enabled then -- game resets wormholes to 'enabled' when sector is loaded
+        wormhole.enabled = not compassLikeGPI_disabled
         Gate.updateTooltip()
     end
+    if compassLikeGPI_restore then
+        compassLikeGPI_restore(data)
+    end
+end
+
+
 end
