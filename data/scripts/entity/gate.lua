@@ -25,8 +25,7 @@ local compassLikeGPI_secure, compassLikeGPI_restore -- overridden functions
 function Gate.getGateName(isDisabled) -- overridden
     local x, y = Sector():getCoordinates()
     local tx, ty = WormHole():getTargetCoordinates()
-
-    	local specs = SectorSpecifics(tx, ty, getGameSeed())
+    local specs = SectorSpecifics(tx, ty, getGameSeed())
 
     -- find "sky" direction to name the gate
     local ownAngle = math.atan2(ty - y, tx - x) + math.pi * 2
@@ -41,8 +40,14 @@ function Gate.getGateName(isDisabled) -- overridden
             min = d
             if isDisabled then -- Integration: Gate Founder
                 iconPath = "data/textures/icons/gatepixelicons/gateNA.png"
+                if Gate.compassLikeGPI_disableMeshes then
+                    Gate.compassLikeGPI_disableMeshes() -- disable portal render
+                end
             else
                 iconPath = "data/textures/icons/gatepixelicons/gate"..dir.name..".png"
+                if Gate.compassLikeGPI_enableMeshes then
+                    Gate.compassLikeGPI_enableMeshes() -- re-enable portal render
+                end
             end
             dirString = (dir.name .. " /*direction*/")%_t
         end
@@ -153,6 +158,28 @@ function Gate.restore(data)
         compassLikeGPI_restore(data)
     end
 end
+
+
+else -- onClient
+
+
+function Gate.compassLikeGPI_disableMeshes()
+    local mesh = PlanMesh()
+
+    mesh:disableMesh(BlockShading.WormHole, MaterialType.Iron)
+    mesh:disableMesh(BlockShading.WormHole, MaterialType.Titanium)
+    mesh:disableMesh(BlockShading.WormHole, MaterialType.Naonite)
+    mesh:disableMesh(BlockShading.WormHole, MaterialType.Trinium)
+    mesh:disableMesh(BlockShading.WormHole, MaterialType.Xanion)
+    mesh:disableMesh(BlockShading.WormHole, MaterialType.Ogonite)
+    mesh:disableMesh(BlockShading.WormHole, MaterialType.Avorion)
+end
+
+function Gate.compassLikeGPI_enableMeshes()
+    local mesh = PlanMesh()
+    mesh:enableAll()
+end
+
 
 
 end
