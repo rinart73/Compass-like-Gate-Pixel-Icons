@@ -25,7 +25,7 @@ local compassLikeGPI_secure, compassLikeGPI_restore -- overridden functions
 function Gate.getGateName(isDisabled) -- overridden
     local x, y = Sector():getCoordinates()
     local tx, ty = WormHole():getTargetCoordinates()
-    local specs = SectorSpecifics(tx, ty, getGameSeed())
+    local specs = SectorSpecifics(tx, ty, GameSeed())
 
     -- find "sky" direction to name the gate
     local ownAngle = math.atan2(ty - y, tx - x) + math.pi * 2
@@ -121,7 +121,7 @@ function Gate.updateTooltip(ready, saveOrDisabled) -- overridden
         local fee = math.ceil(base * Gate.factor(Faction(), user))
         local tooltip = EntityTooltip(Entity().index)
 
-        tooltip:setDisplayTooltip(0, "Fee"%_t, tostring(fee) .. "$")
+        tooltip:setDisplayTooltip(0, "Fee"%_t, "¢${fee}"%_t % {fee = tostring(fee)})
 
         if not gateReady then
             tooltip:setDisplayTooltip(1, "Status"%_t, "Not Ready"%_t)
