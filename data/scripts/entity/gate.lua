@@ -80,6 +80,14 @@ function Gate.initialize() -- overridden
 
         invokeServerFunction("updateTooltip")
         entity:registerCallback("onSelected", "updateTooltip")
+        
+        if GameVersion().minor >= 30 then -- gate sound
+            Gate.soundSource = SoundSource("ambiences/gate1", entity.translationf, 300)
+            Gate.soundSource.minRadius = 15
+            Gate.soundSource.maxRadius = 300
+            Gate.soundSource.volume = 1.0
+            Gate.soundSource:play()
+        end
     end
 end
 
