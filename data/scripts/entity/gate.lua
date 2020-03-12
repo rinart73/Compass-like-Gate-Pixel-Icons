@@ -38,19 +38,18 @@ function Gate.getGateName(isDisabled) -- overridden
         local d = math.abs(ownAngle - dir.angle)
         if d < min then
             min = d
-            if isDisabled then -- Integration: Gate Founder
-                iconPath = "data/textures/icons/gatepixelicons/gateNA.png"
-                if Gate.compassLikeGPI_disableMeshes then
-                    Gate.compassLikeGPI_disableMeshes() -- disable portal render
-                end
-            else
-                iconPath = "data/textures/icons/gatepixelicons/gate"..dir.name..".png"
-                if Gate.compassLikeGPI_enableMeshes then
-                    Gate.compassLikeGPI_enableMeshes() -- re-enable portal render
-                end
-            end
+            iconPath = "data/textures/icons/gatepixelicons/gate"..dir.name..".png"
             dirString = (dir.name .. " /*direction*/")%_t
         end
+    end
+
+    if isDisabled then -- Integration: Gate Founder
+        iconPath = "data/textures/icons/gatepixelicons/gateNA.png"
+        if Gate.compassLikeGPI_disableMeshes then
+            Gate.compassLikeGPI_disableMeshes() -- disable portal render
+        end
+    elseif Gate.compassLikeGPI_enableMeshes then
+        Gate.compassLikeGPI_enableMeshes() -- re-enable portal render
     end
 
     return iconPath, "${dir} Gate to ${sector}"%_t % {dir = dirString, sector = specs.name}
