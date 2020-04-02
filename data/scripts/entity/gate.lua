@@ -34,7 +34,7 @@ function Gate.getGateName(isDisabled) -- overridden
 
     local dirString, iconPath = "", ""
     local min = 3.0
-    for _, dir in pairs(dirs) do
+    for _, dir in ipairs(dirs) do
         local d = math.abs(ownAngle - dir.angle)
         if d < min then
             min = d
