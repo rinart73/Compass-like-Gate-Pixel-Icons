@@ -19,8 +19,8 @@ dirs = -- overridden
 	{name = "E",    angle = math.pi * 2 * 16 / 16}
 }
 
-local compassLikeGPI_disabled -- server
-local compassLikeGPI_secure, compassLikeGPI_restore -- overridden functions
+local compassLikeGPI_disabled -- client/server
+local compassLikeGPI_secure, compassLikeGPI_restore -- overridden server functions
 
 function Gate.getGateName(isDisabled) -- overridden
     local x, y = Sector():getCoordinates()
@@ -80,7 +80,7 @@ function Gate.initialize() -- overridden
         invokeServerFunction("updateTooltip")
         entity:registerCallback("onSelected", "updateTooltip")
         
-        if GameVersion().minor >= 30 then -- gate sound
+        if GameVersion() >= Version(0, 30, 0) then -- gate sound
             Gate.soundSource = SoundSource("ambiences/gate1", entity.translationf, 300)
             Gate.soundSource.minRadius = 15
             Gate.soundSource.maxRadius = 300
@@ -90,23 +90,19 @@ function Gate.initialize() -- overridden
     end
 end
 
-function Gate.updateTooltip(ready, saveOrDisabled) -- overridden
+function Gate.updateTooltip(ready, isPowerDisabled) -- overridden
     if onServer() then
         -- on the server, check if the sector is ready,
         -- then invoke client sided tooltip update with the ready variable
         local entity = Entity()
-        local wormhole = entity:getWormholeComponent()
         local transferrer = EntityTransferrer(entity.index)
-        if saveOrDisabled then -- Save wormhole state (to turn gates on and off)
-            compassLikeGPI_disabled = not wormhole.enabled
-        end
 
         ready = transferrer.sectorReady
 
         if not callingPlayer then
-            broadcastInvokeClientFunction("updateTooltip", ready, not wormhole.enabled)
+            broadcastInvokeClientFunction("updateTooltip", ready, compassLikeGPI_disabled)
         else
-            invokeClientFunction(Player(callingPlayer), "updateTooltip", ready, not wormhole.enabled)
+            invokeClientFunction(Player(callingPlayer), "updateTooltip", ready, compassLikeGPI_disabled)
         end
     else
         if type(ready) == "boolean" then
@@ -130,20 +126,37 @@ function Gate.updateTooltip(ready, saveOrDisabled) -- overridden
 
         tooltip:setDisplayTooltip(0, "Fee"%_t, "¢${fee}"%_t % {fee = tostring(fee)})
 
+        if GameVersion() >= Version(1, 1, 2) and Hud().tutorialActive then
+             gateReady = false -- always show not ready if tutorial is active, as player can't travel via gate
+        end
         if not gateReady then
             tooltip:setDisplayTooltip(1, "Status"%_t, "Not Ready"%_t)
         else
             tooltip:setDisplayTooltip(1, "Status"%_t, "Ready"%_t)
         end
 
-        EntityIcon().icon = Gate.getGateName(saveOrDisabled)
+        compassLikeGPI_disabled = isPowerDisabled
+        EntityIcon().icon = Gate.getGateName(isPowerDisabled)
     end
 end
+
+function Gate.getPower()
+    return not compassLikeGPI_disabled
+end
+
 
 if onServer() then
 
 
-compassLikeGPI_secure = secure
+function Gate.setPower(value)
+    compassLikeGPI_disabled = not value
+    local t = callingPlayer
+    callingPlayer = nil -- we need 'updateTooltip' to broadcast the changes so callingPlayer should be nil
+    Gate.updateTooltip(nil, true)
+    callingPlayer = t
+end
+
+compassLikeGPI_secure = Gate.secure
 function Gate.secure()
     local data = {}
     if compassLikeGPI_secure then
@@ -153,14 +166,9 @@ function Gate.secure()
     return data
 end
 
-compassLikeGPI_restore = restore
+compassLikeGPI_restore = Gate.restore
 function Gate.restore(data)
-    compassLikeGPI_disabled = data.disabled
-    local wormhole = Entity():getWormholeComponent()
-    if not compassLikeGPI_disabled ~= wormhole.enabled then -- game resets wormholes to 'enabled' when sector is loaded
-        wormhole.enabled = not compassLikeGPI_disabled
-        Gate.updateTooltip()
-    end
+    Gate.setPower(not data.disabled)
     if compassLikeGPI_restore then
         compassLikeGPI_restore(data)
     end
