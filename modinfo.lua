@@ -17,11 +17,11 @@ meta =
     description = "Compass-like gate icons. Aimed to help you by saving time - instead of targeting gates one by one, you can just check their icons to see the direction they are going.",
 
     -- Insert all authors into this list
-    authors = {"Rinart73", "lyravega"},
+    authors = {"Rinart73", "lyravega", "luka-devnull"},
 
     -- Version of your mod, should be in format 1.0.0 (major.minor.patch) or 1.0 (major.minor)
     -- This will be used to check for unmet dependencies or incompatibilities
-    version = "1.2.1",
+    version = "1.2.2",
 
     -- If your mod requires dependencies, enter them here. The game will check that all dependencies given here are met.
     -- Possible attributes:

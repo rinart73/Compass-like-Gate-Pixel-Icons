@@ -57,7 +57,7 @@ end
 
 function Gate.initialize() -- overridden
     local entity = Entity()
-    local wormhole = entity:getWormholeComponent()
+    local wormhole = WormHole()
 
     local tx, ty = wormhole:getTargetCoordinates()
     local x, y = Sector():getCoordinates()
