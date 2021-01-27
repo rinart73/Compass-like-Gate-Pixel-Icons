@@ -19,7 +19,7 @@ dirs = -- overridden
 	{name = "E",    angle = math.pi * 2 * 16 / 16}
 }
 
-local compassLikeGPI_disabled -- client/server
+local compassLikeGPI_disabled = false -- client/server
 local compassLikeGPI_secure, compassLikeGPI_restore -- overridden server functions
 
 function Gate.getGateName(isDisabled) -- overridden
@@ -141,8 +141,10 @@ function Gate.updateTooltip(ready, isPowerDisabled) -- overridden
             tooltip:setDisplayTooltip(1, "Status"%_t, "Ready"%_t)
         end
 
-        compassLikeGPI_disabled = isPowerDisabled
-        EntityIcon().icon = Gate.getGateName(isPowerDisabled)
+        if type(isPowerDisabled) == "boolean" then
+            compassLikeGPI_disabled = isPowerDisabled
+            EntityIcon().icon = Gate.getGateName(isPowerDisabled)
+        end
     end
 end
 
