@@ -72,7 +72,13 @@ function Gate.initialize() -- overridden
     if onServer() then
         -- get callbacks for sector readiness
         entity:registerCallback("destinationSectorReady", "updateTooltip")
-
+        if GameVersion() >= Version(1, 3, 5) then
+            if Scenario().isCreative then
+                entity.dockable = true
+            else
+                entity.dockable = false
+            end
+        end
         Gate.updateTooltip()
     else
         EntityIcon().icon, Entity().title = Gate.getGateName()
